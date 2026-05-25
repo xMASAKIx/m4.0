@@ -68,22 +68,20 @@ API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
 
 last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
 
-# --- 修改後的 check_players 核心片段 ---
 def check_players():
     global last_known_data
     for pid, info in PLAYER_MAP.items():
         time.sleep(0.6)
         try:
-            # (省略請求 API 邏輯...)
-            # ... 取得 is_online, world_name, p_code 等資料 ...
+            # ... (取得 API 資料 is_online, world_name, p_code 的邏輯) ...
 
-            # 比對狀態
             prev = last_known_data[pid]
+            
+            # 狀態改變才觸發
             if prev["is_online"] != is_online or (is_online and prev["world_name"] != world_name):
-                # 更新快取
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
                 
-                # 建立要傳遞給通知函式的 entry 字典
+                # 準備資料字典
                 entry = {
                     "ppsn": pid,
                     "profileName": info["name"],
@@ -92,17 +90,20 @@ def check_players():
                     "worldName": world_name
                 }
                 
-                # 直接呼叫新的通知函式，它已經整合了 MongoDB 清理與排版
+                # 統一由這個函數處理：清理舊的 -> 發送新的 -> 存入新的 ID
                 send_notification(entry, is_online)
 
         except Exception as e:
-            print(f"檢查 {pid} 出錯: {e}")
+            print(f"❌ 檢查 {pid} 出錯: {e}")
 
 def send_notification(entry: dict, is_online: bool) -> None:
-    # 1. 基礎資料處理
     ppsn = str(entry.get("ppsn", "?"))
-    custom_info = PLAYER_MAP.get(ppsn)
     
+    # 1. 執行清理：刪除舊訊息 (這裡執行一次就夠了)
+    delete_old_msg(ppsn)
+    
+    # 2. 準備排版資料
+    custom_info = PLAYER_MAP.get(ppsn)
     raw_name = custom_info.get("name", entry.get("profileName", "?")) if custom_info else entry.get("profileName", "?")
     clean_name = raw_name.replace('【', '').replace('】', '')
     
@@ -110,7 +111,6 @@ def send_notification(entry: dict, is_online: bool) -> None:
     image = custom_info.get("image", entry.get("profileImageUrl", "")) if custom_info else entry.get("profileImageUrl", "")
     world = entry.get("worldName")
 
-    # 2. 排版變數定義
     color = 3066993 if is_online else 15158332
     icon = "🟢" if is_online else "🔴"
     status_str = "上線了！" if is_online else "下線了。"
@@ -133,24 +133,20 @@ def send_notification(entry: dict, is_online: bool) -> None:
     if image:
         embed["thumbnail"] = {"url": image}
 
-    # 3. 執行 MongoDB 清理舊訊息與發送新訊息
-    # 假設我們現在統一使用 DISCORD_WEBHOOK_URL
-    webhook_url = DISCORD_WEBHOOK_URL 
-
-    # 先刪除舊的 (從 MongoDB 查詢 ID)
-    delete_old_msg(ppsn)
-
-    # 發送新的
+    # 3. 發送新訊息
     try:
-        r = requests.post(webhook_url + "?wait=true", json={"embeds": [embed]}, timeout=10)
+        # 使用 ?wait=true 確保能拿到 msg_id
+        r = requests.post(DISCORD_WEBHOOK_URL + "?wait=true", json={"embeds": [embed]}, timeout=10)
         if r.status_code == 200:
             new_id = r.json().get("id")
-            # 存入 MongoDB
+            # 存入 MongoDB 以供下次刪除使用
             save_new_msg(ppsn, new_id)
             print(f"📣 [Discord已發送] 通知玩家: {clean_name} {status_str}")
+        else:
+            print(f"❌ Discord 發送失敗，狀態碼: {r.status_code}")
     except Exception as e:
-        print(f"❌ Discord 通知失敗: {e}")
-
+        print(f"❌ Discord 通知異常: {e}")
+        
 def main_loop():
     while True:
         check_players()
