@@ -68,31 +68,115 @@ API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
 
 last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
 
+# --- 修改後的 check_players 核心片段 ---
 def check_players():
     global last_known_data
     for pid, info in PLAYER_MAP.items():
         time.sleep(0.6)
         try:
-            # ... (發送請求與取得資料邏輯保持不變) ...
-            # 當 should_notify 為 True 時，執行以下更新：
+            # (省略請求 API 邏輯...)
+            # ... 取得 is_online, world_name, p_code 等資料 ...
 
-            if should_notify:
+            # 比對狀態
+            prev = last_known_data[pid]
+            if prev["is_online"] != is_online or (is_online and prev["world_name"] != world_name):
+                # 更新快取
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
                 
-                # 1. 先刪除舊訊息
-                delete_old_msg(pid)
+                # 建立要傳遞給通知函式的 entry 字典
+                entry = {
+                    "ppsn": pid,
+                    "profileName": info["name"],
+                    "profileCode": p_code,
+                    "profileImageUrl": info.get("image", ""),
+                    "worldName": world_name
+                }
                 
-                # 2. 發送新訊息 (務必加上 ?wait=true)
-                payload = { "embeds": [...] } # 你原本的排版內容
-                response = requests.post(DISCORD_WEBHOOK_URL + "?wait=true", json=payload, timeout=10)
-                
-                if response.status_code == 200:
-                    new_id = response.json().get("id")
-                    save_new_msg(pid, new_id)
-                
-                print(f"📣 已更新玩家通知: {name}")
+                # 直接呼叫新的通知函式，它已經整合了 MongoDB 清理與排版
+                send_notification(entry, is_online)
 
         except Exception as e:
             print(f"檢查 {pid} 出錯: {e}")
 
-# ... (其餘 main_loop 與 main 啟動邏輯保持不變) ...
+def send_notification(entry: dict, is_online: bool) -> None:
+    # 1. 基礎資料處理
+    ppsn = str(entry.get("ppsn", "?"))
+    custom_info = PLAYER_MAP.get(ppsn)
+    
+    raw_name = custom_info.get("name", entry.get("profileName", "?")) if custom_info else entry.get("profileName", "?")
+    clean_name = raw_name.replace('【', '').replace('】', '')
+    
+    code = entry.get("profileCode", "?")
+    image = custom_info.get("image", entry.get("profileImageUrl", "")) if custom_info else entry.get("profileImageUrl", "")
+    world = entry.get("worldName")
+
+    # 2. 排版變數定義
+    color = 3066993 if is_online else 15158332
+    icon = "🟢" if is_online else "🔴"
+    status_str = "上線了！" if is_online else "下線了。"
+    title_str = f"{icon} 【{clean_name}】 {icon} {status_str}"
+
+    fields = [
+        {"name": "代碼", "value": f"`{code}`", "inline": True},
+        {"name": "狀態", "value": f"{icon} {status_str}", "inline": True},
+    ]
+    if is_online and world:
+        fields.append({"name": "目前位置", "value": f"`{world}`", "inline": True})
+
+    embed = {
+        "color": color,
+        "title": title_str,
+        "fields": fields,
+        "footer": {"text": f"PPSN: {ppsn}"},
+        "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+    }
+    if image:
+        embed["thumbnail"] = {"url": image}
+
+    # 3. 執行 MongoDB 清理舊訊息與發送新訊息
+    # 假設我們現在統一使用 DISCORD_WEBHOOK_URL
+    webhook_url = DISCORD_WEBHOOK_URL 
+
+    # 先刪除舊的 (從 MongoDB 查詢 ID)
+    delete_old_msg(ppsn)
+
+    # 發送新的
+    try:
+        r = requests.post(webhook_url + "?wait=true", json={"embeds": [embed]}, timeout=10)
+        if r.status_code == 200:
+            new_id = r.json().get("id")
+            # 存入 MongoDB
+            save_new_msg(ppsn, new_id)
+            print(f"📣 [Discord已發送] 通知玩家: {clean_name} {status_str}")
+    except Exception as e:
+        print(f"❌ Discord 通知失敗: {e}")
+
+def main_loop():
+    while True:
+        check_players()
+        time.sleep(CHECK_INTERVAL)
+
+if __name__ == "__main__":
+    print("--- 正在嘗試發送啟動訊號到 Discord ---")
+    try:
+        response = requests.post(
+            DISCORD_WEBHOOK_URL, 
+            json={"content": "🤖 安靜晚安！"},
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=10
+        )
+        if response.status_code in [200, 204]:
+            print(f"✅ Discord 啟動訊號發送成功！")
+        else:
+            print(f"❌ Discord 拒絕請求，錯誤代碼: {response.status_code}")
+            
+    except Exception as e:
+        print(f"💥 啟動訊號發送過程中發生異常: {e}")
+
+    monitor_thread = threading.Thread(target=main_loop, daemon=True)
+    monitor_thread.start()
+    print("📡 後台監控線程已啟動，開始循環掃描。")
+
+    print("🌐 正在啟動 Flask Web 服務...")
+    run_web()
+
