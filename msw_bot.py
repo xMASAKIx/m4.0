@@ -68,25 +68,35 @@ def send_notification(entry, is_online):
 
 def check_players():
     for pid, info in PLAYER_MAP.items():
-        time.sleep(0.8)
+        time.sleep(1.0)
         try:
             r = requests.get(API_URL_TEMPLATE.format(pid), timeout=10)
-            if r.status_code != 200: continue
+            if r.status_code != 200: 
+                print(f"⚠️ API 回傳錯誤 {r.status_code} 對象: {pid}")
+                continue
             
             data = r.json().get('data', {})
-            # 判斷是否上線 (根據 API 回傳格式調整)
+            # 這裡加入 DEBUG 資訊，觀察 API 實際回傳什麼
             is_online = data.get('isOnline') == 1 or data.get('isOnline') is True
             world_name = data.get('worldName')
             p_code = data.get('profileCode', '未知')
+            print(f"🔍 DEBUG: 玩家 {info['name']} 狀態: {'線上' if is_online else '離線'}, 地點: {world_name}")
 
             prev = last_known_data[pid]
+            # 強制條件：如果上次狀態是 None (剛啟動)，直接記錄當前狀態，但不發通知 (除非你想讓他開機就噴通知)
+            if prev["is_online"] is None:
+                last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
+                print(f"✅ 玩家 {info['name']} 初始狀態已設定為: {'線上' if is_online else '離線'}")
+                continue
+
+            # 狀態改變才觸發
             if prev["is_online"] != is_online or (is_online and prev["world_name"] != world_name):
-                if prev["is_online"] is not None: # 避免剛啟動時發送所有人的通知
-                    send_notification({
-                        "ppsn": pid, "profileName": info["name"],
-                        "profileCode": p_code, "profileImageUrl": info["image"], 
-                        "worldName": world_name
-                    }, is_online)
+                print(f"🔔 狀態變更！玩家 {info['name']} 準備發送通知...")
+                send_notification({
+                    "ppsn": pid, "profileName": info["name"],
+                    "profileCode": p_code, "profileImageUrl": info["image"], 
+                    "worldName": world_name
+                }, is_online)
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
         except Exception as e:
             print(f"❌ 檢查 {pid} 錯誤: {e}")
