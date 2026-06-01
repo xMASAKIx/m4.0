@@ -1,113 +1,176 @@
 import requests
 import time
 import threading
-import os
 from flask import Flask
-from pymongo import MongoClient
+import os
 
-# --- 設定區域 ---
-MONGO_URI = os.environ.get("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client["msw_bot"]
-collection = db["message_ids"] 
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1508579382262894674/nsuyDSWdCBpIIys7otJmgEM_FwSKG1Ea-F6p2mDxVAk43JtHP1WmsHXq88niTX2m4uyI"
-CHECK_INTERVAL = 15 
-API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
-
-PLAYER_MAP = {
-    "20372100008741142": {"name": "m4s4", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/581/1774372787770.png"}
-}
-
-last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
 app = Flask('')
 
 @app.route('/')
-def home(): return "MSW Bot is Running!"
+def home():
+    return "MSW Bot with Custom Images is Alive!"
 
-def delete_old_msg(pid):
-    doc = collection.find_one({"pid": pid})
-    if doc and "msg_id" in doc:
-        try:
-            requests.delete(f"{DISCORD_WEBHOOK_URL}/messages/{doc['msg_id']}", timeout=5)
-        except: pass
-        collection.delete_one({"pid": pid})
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
-def save_new_msg(pid, msg_id):
-    collection.update_one({"pid": pid}, {"$set": {"msg_id": msg_id}}, upsert=True)
+# --- 設定區域 ---
+PLAYER_MAP = {
+    "20372100001522660": {"name": "戴爾塔", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/791/1779084458525.png"},
+    "20372100008458134": {"name": "魚人", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/758/1779542741338.png"},
+    "20372100000100706": {"name": "康娜作者", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/984/1722308667603.png"},
+    "20372100000590354": {"name": "照&露西", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/114/1771410723884.png"},
+    "20372100005311821": {"name": "照&露西2", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/949/1774672479562.png"}
+}
 
-def send_notification(entry, is_online):
-    ppsn = str(entry["ppsn"])
-    delete_old_msg(ppsn)
-    
-    clean_name = entry["profileName"].replace('【', '').replace('】', '')
-    icon = "🟢" if is_online else "🔴"
-    status_str = "上線了！" if is_online else "下線了。"
-    
-    fields = [
-        {"name": "代碼", "value": f"`{entry['profileCode']}`", "inline": True},
-        {"name": "狀態", "value": f"{icon} {status_str}", "inline": True},
-    ]
-    if is_online and entry.get("worldName"):
-        fields.append({"name": "目前位置", "value": f"`{entry['worldName']}`", "inline": True})
+DEFAULT_IMAGE = "https://example.com/default.png"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1506776199039553739/0OEemnWdcbnmjCwOl5UrUKnXUFeUKKAnqbFyUhvILB4-f42OG0-1k2LENsoFBuoQsc_J"
 
-    embed = {
-        "color": 3066993 if is_online else 15158332,
-        "title": f"{icon} 【{clean_name}】 {icon} {status_str}",
-        "fields": fields,
-        "footer": {"text": f"PPSN: {ppsn}"},
-        "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-        "thumbnail": {"url": entry.get("profileImageUrl", "")}
+# 建議調到 30 或 60 比較安全，但這邊先保留你原本的 15 試試看
+CHECK_INTERVAL = 15 
+API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
+
+last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
+
+def send_ip_blocked_warning(status_code):
+    """當發現被鎖 IP 時，發送警告到 Discord"""
+    print(f"⚠️ [警告] : 維京出現把阿拉擄走 {status_code}。正在發送通知...")
+    payload = {
+        "embeds": [{
+            "title": "⚠️ 阿拉跟隨維京進入到特殊領域 (Error 1015)",
+            "description": f"安靜叫不起來了。\n**原因**：阿拉學維京，已被 rate limit。\n**HTTP 狀態碼**：`{status_code}`\n\n倒數機制已啟動：**阿拉被維京關在地下室 10 分鐘**。",
+            "color": 16744192,  # 橘色
+            "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+        }]
     }
-    
     try:
-        r = requests.post(DISCORD_WEBHOOK_URL + "?wait=true", json={"embeds": [embed]}, timeout=10)
-        if r.status_code == 200:
-            save_new_msg(ppsn, r.json()["id"])
+        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
     except Exception as e:
-        print(f"❌ Discord 發送失敗: {e}")
+        print(f"發送 IP 被鎖警告至 DC 失敗: {e}")
 
 def check_players():
-    for pid, info in PLAYER_MAP.items():
-        time.sleep(1.0)
-        try:
-            r = requests.get(API_URL_TEMPLATE.format(pid), timeout=10)
-            if r.status_code != 200: 
-                print(f"⚠️ API 回傳錯誤 {r.status_code} 對象: {pid}")
-                continue
-            
-            data = r.json().get('data', {})
-            # 這裡加入 DEBUG 資訊，觀察 API 實際回傳什麼
-            is_online = data.get('isOnline') == 1 or data.get('isOnline') is True
-            world_name = data.get('worldName')
-            p_code = data.get('profileCode', '未知')
-            print(f"🔍 DEBUG: 玩家 {info['name']} 狀態: {'線上' if is_online else '離線'}, 地點: {world_name}")
+    global last_known_data
+    print(f"[{time.strftime('%H:%M:%S')}] 啟動掃描...")
 
+    for pid, info in PLAYER_MAP.items():
+        time.sleep(0.6) # 👈 幫你拉長到 1.0 秒，分散連擊請求，能大大降低再被鎖的機率！
+        try:
+            name = info["name"]
+            custom_image = info.get("image", DEFAULT_IMAGE)
+            url = API_URL_TEMPLATE.format(pid)
+            
+            # 偽裝稍微完整一點的瀏覽器特徵
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            # 💡 【新增判斷】如果狀態碼不是 200，先記 LOG；如果是被鎖，就發 DC 通知並休息 10 分鐘
+            if response.status_code != 200:
+                print(f"❌ 擷取 {name} 失敗，狀態碼: {response.status_code}")
+                if response.status_code in [429, 403, 1015]:
+                    send_ip_blocked_warning(response.status_code)
+                    print("😴 進入冷卻模式，暫停打擾 Nexon 10 分鐘...")
+                    time.sleep(600)  # 暫停 10 分鐘
+                    return           # 直接中斷這一輪，等 10 分鐘後重新開始
+                continue
+                
+            data_root = response.json().get('data', {})
+            
+            # 兼容 1/0 或 True/False 的狀態值
+            raw_online = data_root.get('isOnline')
+            is_online = (raw_online == 1 or raw_online is True)
+            
+            world_name = data_root.get('worldName') 
+            p_code = data_root.get('profileCode', '未知')
+            
             prev = last_known_data[pid]
-            # 強制條件：如果上次狀態是 None (剛啟動)，直接記錄當前狀態，但不發通知 (除非你想讓他開機就噴通知)
+
+            # 首次啟動：存入資料（洗掉 None 狀態）但不發通知
             if prev["is_online"] is None:
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
-                print(f"✅ 玩家 {info['name']} 初始狀態已設定為: {'線上' if is_online else '離線'}")
+                print(f"📌 [初始化紀錄] {name} -> 線上: {is_online}, 世界: {world_name}")
                 continue
 
-            # 狀態改變才觸發
-            if prev["is_online"] != is_online or (is_online and prev["world_name"] != world_name):
-                print(f"🔔 狀態變更！玩家 {info['name']} 準備發送通知...")
-                send_notification({
-                    "ppsn": pid, "profileName": info["name"],
-                    "profileCode": p_code, "profileImageUrl": info["image"], 
-                    "worldName": world_name
-                }, is_online)
+            should_notify = False
+            status_msg = ""
+            
+            # 印出即時比對狀況（方便在 Render 之後 debug 測試帳號）
+            print(f"   [比對-{name}] 歷史: {prev['is_online']}({prev['world_name']}) ➡️ 最新: {is_online}({world_name})")
+
+            # 核心狀態改變判斷
+            if prev["is_online"] != is_online:
+                should_notify = True
+                status_msg = "🟢 上線了！" if is_online else "🔴 下線了。"
+            elif is_online and prev["world_name"] != world_name:
+                should_notify = True
+                status_msg = f"切換世界"
+            
+            if should_notify:
+                # 確定要通知後，立即更新歷史資料快取
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
+                current_world = world_name if world_name else "大廳或選單中"
+                
+                # 色彩與圖示燈號
+                if is_online:
+                    if "切換世界" in status_msg:
+                        color = 16776960  # 純黃色
+                        title_icon = "🔄"
+                    else:
+                        color = 65280     # 純綠色
+                        title_icon = "🟢"
+                else:
+                    color = 16185856      # 純紅色
+                    title_icon = "🔴"
+                
+                description = f"代碼：`{p_code}`\n狀態：**{status_msg}**"
+                if is_online:
+                    description += f"\n目前位置：`{current_world}`"
+
+                payload = {
+                    "embeds": [{
+                        "title": f"{title_icon} 【{name}】{status_msg}",  
+                        "description": description,
+                        "thumbnail": {"url": custom_image}, 
+                        "color": color,                                  
+                        "footer": {"text": f"PPSN: {pid}"},
+                        "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+                    }]
+                }
+                
+                # 乾淨發送：全部直接走同一個 Webhook
+                requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
+                print(f"📣 [Discord已發送] 通知玩家: {name} {status_msg}")
+
         except Exception as e:
-            print(f"❌ 檢查 {pid} 錯誤: {e}")
+            print(f"❌ 檢查 {pid} ({info.get('name', '未知')}) 出錯: {e}")
 
 def main_loop():
-    print("📡 監控循環已啟動...")
     while True:
         check_players()
         time.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
-    threading.Thread(target=main_loop, daemon=True).start()
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    print("--- 正在嘗試發送啟動訊號到 Discord ---")
+    try:
+        response = requests.post(
+            DISCORD_WEBHOOK_URL, 
+            json={"content": "🤖 阿拉也默默穿上黑絲！"},
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=10
+        )
+        if response.status_code in [200, 204]:
+            print(f"✅ Discord 啟動訊號發送成功！")
+        else:
+            print(f"❌ Discord 拒絕請求，錯誤代碼: {response.status_code}")
+            
+    except Exception as e:
+        print(f"💥 啟動訊號發送過程中發生異常: {e}")
+
+    monitor_thread = threading.Thread(target=main_loop, daemon=True)
+    monitor_thread.start()
+    print("📡 後台監控線程已啟動，開始循環掃描。")
+
+    print("🌐 正在啟動 Flask Web 服務...")
+    run_web()
