@@ -23,7 +23,7 @@ PLAYER_MAP = {
     "20372100000684110": {"name": "黑貞", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/49/1721248110286.png"},
     "20372100007023711": {"name": "sansan", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/214/1780392703599.png"},
     "20372100003289343": {"name": "肥倫&奇樹", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/357/1780329461647.png"},
-    "20372100000737301": {"name": "HEE SABER", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/156/1728640874084.png"}
+    "20372100000737301": {"name": "HEE SABER", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/521/1728129793932.png"}
 }
 
 DEFAULT_IMAGE = "https://example.com/default.png"
