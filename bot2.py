@@ -19,7 +19,7 @@ PLAYER_MAP = {
     "20372100000209378": {"name": "doxx(老PAKA)", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/491/1724686860431.png"},
     "20372100005770592": {"name": "PAKA", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/271/1775588447819.png"},
     "20372100008443475": {"name": "paka1", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/679/1774714211779.png"},
-    "20372100005802883": {"name": "paka2", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/389/1777320374327.png")
+    "20372100005802883": {"name": "paka2", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/389/1777320374327.png"}
 }
 
 
