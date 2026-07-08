@@ -24,7 +24,7 @@ PLAYER_MAP = {
 
 
 DEFAULT_IMAGE = "https://example.com/default.png"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1524418986249289858/Vwcy0Vg9LFHMavyZAHBK_97ts5oc1ast5dyIib8RssERmJNlTWuiedQh96pawHcjoM-C"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1502364012128637039/o9cJHlVQ4sibt4E-YVSki-TsNlaRSwjFH2kDaiqwl5qPnek5_UR4SWDVdZpfBYWRVbS7"
 
 # 建議調到 30 或 60 比較安全，但這邊先保留你原本的 15 試試看
 CHECK_INTERVAL = 8 
