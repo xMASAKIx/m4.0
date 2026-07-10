@@ -33,7 +33,9 @@ PLAYER_MAP = {
     "20372100009883849": {"name": "紅蓮刀", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/100/1782394792562.png"},
     "20372100005888270": {"name": "黑箱抽獎嘟嘟臉", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/928/1782009443892.png"},
     "20372100007184155": {"name": "綠鯊魚", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/685/1782798580537.png"},
-    "20372100000528012": {"name": "⑨", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/907/1749779226013.png"}
+    "20372100000528012": {"name": "⑨", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/907/1749779226013.png"},   
+    "20372100001110266": {"name": "步槍王", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/550/1737478667056.png"},   
+    "20372100008590559": {"name": "炸諞垃圾黑豹", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/691/1783551670086.png"}
 }
 
 
