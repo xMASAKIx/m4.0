@@ -17,7 +17,7 @@ def run_web():
 # --- 設定區域 ---
 PLAYER_MAP = {
     "20372100008458134": {"name": "魚人", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/758/1779542741338.png"},
-    "20372100000100706": {"name": "康娜作者", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/984/1722308667603.png"},
+    "20372100010299557": {"name": "白琉", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/646/1783854737066.png"},
     "20372100000590354": {"name": "照&露西", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/114/1771410723884.png"},
     "20372100005311821": {"name": "照&露西2", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/949/1774672479562.png"},
     "20372100000684110": {"name": "黑貞", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/49/1721248110286.png"},
