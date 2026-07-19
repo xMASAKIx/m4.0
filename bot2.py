@@ -26,10 +26,10 @@ PLAYER_MAP = {
 
 
 DEFAULT_IMAGE = "https://example.com/default.png"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1502364012128637039/o9cJHlVQ4sibt4E-YVSki-TsNlaRSwjFH2kDaiqwl5qPnek5_UR4SWDVdZpfBYWRVbS7"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1528371012637560943/MBMEBEYUM4TTt9y3-X0mq8fxeFwRx7eBmMzYFLz_tS1y7c2zOTTFjRlBuDSFsxoak2pQ"
 
 # 建議調到 30 或 60 比較安全，但這邊先保留你原本的 15 試試看
-CHECK_INTERVAL = 8 
+CHECK_INTERVAL = 8
 API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
 
 last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
@@ -55,7 +55,7 @@ def check_players():
     print(f"[{time.strftime('%H:%M:%S')}] 啟動掃描...")
 
     for pid, info in PLAYER_MAP.items():
-        time.sleep(0.6) # 👈 幫你拉長到 1.0 秒，分散連擊請求，能大大降低再被鎖的機率！
+        time.sleep(0.8) # 👈 幫你拉長到 1.0 秒，分散連擊請求，能大大降低再被鎖的機率！
         try:
             name = info["name"]
             custom_image = info.get("image", DEFAULT_IMAGE)
