@@ -30,7 +30,7 @@ PLAYER_MAP = {
     "20372100008986248": {"name": "橘福福2?", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/326/1781812989489.png"},
     "20372100005888270": {"name": "黑箱抽獎嘟嘟臉", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/928/1782009443892.png"},
     "20372100007184155": {"name": "綠鯊魚", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/685/1782798580537.png"},
-    "20372100000528012": {"name": "⑨", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/907/1749779226013.png"},
+    "20372100000528012": {"name": "笨蛋", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/907/1749779226013.png"},
     "20372100001110266": {"name": "步槍王", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/550/1737478667056.png"},
     "20372100007074222": {"name": "es檔案", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/233/1783667416322.png"}
 }
