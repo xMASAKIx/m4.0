@@ -47,6 +47,30 @@ API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
 
 last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
 
+def send_discord_webhook(url, payload):
+    """安全發送 Discord Webhook，自動處理 429 Rate Limit"""
+    for attempt in range(3): # 最多重試 3 次
+        try:
+            response = requests.post(url, json=payload, timeout=10)
+            if response.status_code == 429:
+                # 取得 Discord 要求等待的時間 (秒)，如果沒有則預設 2 秒
+                try:
+                    retry_after = response.json().get('retry_after', 2)
+                except:
+                    retry_after = 2
+                print(f"⚠️ 觸發 Discord 429 Rate Limit，將等待 {retry_after} 秒後重試...")
+                time.sleep(retry_after)
+                continue
+            elif response.status_code in [200, 204]:
+                return True
+            else:
+                print(f"❌ Discord 回傳非預期狀態碼: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"發送 Discord 請求發生異常: {e}")
+            time.sleep(1)
+    return False
+
 def send_ip_blocked_warning(status_code):
     """當發現被鎖 IP 時，發送警告到 Discord"""
     print(f"⚠️ [警告] : 維京出現把阿拉擄走 {status_code}。正在發送通知...")
