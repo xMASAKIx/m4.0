@@ -34,6 +34,7 @@ PLAYER_MAP = {
     "20372100001110266": {"name": "步槍王", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/550/1737478667056.png"},
     "20372100007074222": {"name": "es檔案", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/233/1783667416322.png"},
     "20372100003511199": {"name": "檔案頭?", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/256/1768671015251.png"},
+    "20372100005241912": {"name": "EUY", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/268/1787469583846.png"},
     "20372100002493318": {"name": "雜種", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/429/1725931640969.png"}
 }
 
