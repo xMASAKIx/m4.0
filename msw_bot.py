@@ -16,26 +16,19 @@ def run_web():
 
 # --- 設定區域 ---
 PLAYER_MAP = {
-    "20372100010299557": {"name": "白琉", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/646/1783854737066.png"},
     "20372100000590354": {"name": "照&露西", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/114/1771410723884.png"},
     "20372100005311821": {"name": "照&露西2", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/949/1774672479562.png"},
     "20372100000684110": {"name": "黑貞", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/49/1721248110286.png"},
-    "20372100007023711": {"name": "sansan", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/214/1780392703599.png"},
     "20372100003289343": {"name": "肥倫&奇樹", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/357/1780329461647.png"},
-    "20372100000535168": {"name": "겐지스", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/212/1781100473061.png"},
-    "20372100008590559": {"name": "黑豹女", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/726/1781314436642.png"},
+    "20372100000535168": {"name": "泳裝亞子", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/212/1781100473061.png"},
     "20372100009883849": {"name": "紅蓮刀", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/100/1782394792562.png"},
     "20372100000104053": {"name": "沖田2", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/704/1781446719047.png"},
-    "20372100005252557": {"name": "橘福福雅", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/310/1779852280518.png"},
-    "20372100008986248": {"name": "橘福福2?", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/326/1781812989489.png"},
-    "20372100005888270": {"name": "黑箱抽獎嘟嘟臉", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/928/1782009443892.png"},
     "20372100007184155": {"name": "綠鯊魚", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/685/1782798580537.png"},
     "20372100000528012": {"name": "笨蛋", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/907/1749779226013.png"},
     "20372100001110266": {"name": "步槍王", "image": "https://mod-file.dn.nexoncdn.co.kr/profile/550/1737478667056.png"},
     "20372100007074222": {"name": "es檔案", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/233/1783667416322.png"},
     "20372100003511199": {"name": "檔案頭?", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/256/1768671015251.png"},
-    "20372100005241912": {"name": "EUY", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/268/1787469583846.png"},
-    "20372100002493318": {"name": "雜種", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/429/1725931640969.png"}
+    "20372100005241912": {"name": "EUY", "image": "https://mod-file.dn.nexoncdn.co.kr/shop/268/1787469583846.png"}
 }
 
 
