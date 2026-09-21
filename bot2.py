@@ -27,7 +27,7 @@ PLAYER_MAP = {
 
 
 DEFAULT_IMAGE = "https://example.com/default.png"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1528371012637560943/MBMEBEYUM4TTt9y3-X0mq8fxeFwRx7eBmMzYFLz_tS1y7c2zOTTFjRlBuDSFsxoak2pQ"
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
 # 建議調到 30 或 60 比較安全，但這邊先保留你原本的 15 試試看
 CHECK_INTERVAL = 8
