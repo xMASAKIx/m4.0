@@ -43,9 +43,9 @@ def send_discord_webhook(url, payload):
             if response.status_code == 429:
                 # 取得 Discord 要求等待的時間 (秒)，如果沒有則預設 2 秒
                 try:
-                    retry_after = response.json().get('retry_after', 2)
+                    retry_after = response.json().get('retry_after', 30)
                 except:
-                    retry_after = 2
+                    retry_after = 30
                 print(f"⚠️ 觸發 Discord 429 Rate Limit，將等待 {retry_after} 秒後重試...")
                 time.sleep(retry_after)
                 continue
