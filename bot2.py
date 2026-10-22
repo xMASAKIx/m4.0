@@ -161,18 +161,21 @@ def main_loop():
         time.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
-    print("--- 正在嘗試發送啟動訊號到 Discord ---")
-    
-    # 💡 這裡改用統一的安全發送函數，確保開機發送如果遇到 429 也能完整印出 Log 並冷卻
-    startup_payload = {"content": "🤖 PAKA，自己掰開！"}
-    if send_discord_webhook(DISCORD_WEBHOOK_URL, startup_payload):
-        print(f"✅ Discord 啟動訊號發送成功！")
-    else:
-        print(f"⚠️ Discord 啟動訊號發送未成功（可能遭遇 429 限制已自動暫停）")
+    # 💡 建立背景任務執行緒：把初始化發送與循環監控放進背景，避免卡住主執行緒的 Port 綁定
+    def background_startup_and_monitor():
+        print("--- 正在嘗試發送啟動訊號到 Discord ---")
+        startup_payload = {"content": "🤖 PAKA，自己掰開！"}
+        if send_discord_webhook(DISCORD_WEBHOOK_URL, startup_payload):
+            print(f"✅ Discord 啟動訊號發送成功！")
+        else:
+            print(f"⚠️ Discord 啟動訊號發送未成功（可能遭遇 429 限制已自動暫停）")
 
-    monitor_thread = threading.Thread(target=main_loop, daemon=True)
-    monitor_thread.start()
-    print("📡 後台監控線程已啟動，開始循環掃描。")
+        monitor_thread = threading.Thread(target=main_loop, daemon=True)
+        monitor_thread.start()
+        print("📡 後台監控線程已啟動，開始循環掃描。")
 
-    print("🌐 正在啟動 Flask Web 服務...")
-    run_web()
+    bg_thread = threading.Thread(target=background_startup_and_monitor, daemon=True)
+    bg_thread.start()
+
+    print("🌐 正在立即啟動 Flask Web 服務...")
+    run_web() # 主執行緒立刻跑 Flask，讓 Render 瞬間抓到 Port 通過檢測！
