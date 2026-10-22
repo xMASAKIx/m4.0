@@ -35,28 +35,34 @@ last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYE
 
 def send_discord_webhook(url, payload):
     """安全發送 Discord Webhook，每次遇到 429 時都會明確印出 Log 並暫停 10 分鐘 (600秒)"""
+    if not url:
+        print("❌ 錯誤：未設定 DISCORD_WEBHOOK_URL 環境變數！", flush=True)
+        return False
+
     for attempt in range(5):
         try:
             headers = {'User-Agent': 'Mozilla/5.0'}
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            # 使用 (連線逾時, 讀取逾時)，避免網路卡死
+            response = requests.post(url, json=payload, headers=headers, timeout=(5, 10))
             
             if response.status_code == 429:
-                print(f"[{time.strftime('%H:%M:%S')}] ⚠️ 觸發 Discord 429 Rate Limit！進入冷卻模式：暫停 10 分鐘...")
+                print(f"[{time.strftime('%H:%M:%S')}] ⚠️ 觸發 Discord 429 Rate Limit！進入冷卻模式：暫停 10 分鐘...", flush=True)
                 time.sleep(600)  # 強制暫停 10 分鐘
-                continue         # 10分鐘後重新嘗試
+                continue         
             elif response.status_code in [200, 204]:
+                print(f"[{time.strftime('%H:%M:%S')}] ✅ Discord 訊息發送成功！", flush=True)
                 return True
             else:
-                print(f"[{time.strftime('%H:%M:%S')}] ❌ Discord 回傳非預期狀態碼: {response.status_code}")
+                print(f"[{time.strftime('%H:%M:%S')}] ❌ Discord 回傳非預期狀態碼: {response.status_code}", flush=True)
                 return False
         except Exception as e:
-            print(f"[{time.strftime('%H:%M:%S')}] 發送 Discord 請求發生異常: {e}")
+            print(f"[{time.strftime('%H:%M:%S')}] 發送 Discord 請求發生異常: {e}", flush=True)
             time.sleep(2)
     return False
 
 def send_ip_blocked_warning(status_code):
     """當發現被鎖 IP 時，發送警告到 Discord"""
-    print(f"⚠️ [警告] : 維京出現把阿拉擄走 {status_code}。正在發送通知...")
+    print(f"⚠️ [警告] : 維京出現把阿拉擄走 {status_code}。正在發送通知...", flush=True)
     payload = {
         "embeds": [{
             "title": "⚠️ 阿拉跟隨維京進入到特殊領域 (Error 1015)",
@@ -69,7 +75,7 @@ def send_ip_blocked_warning(status_code):
 
 def check_players():
     global last_known_data
-    print(f"[{time.strftime('%H:%M:%S')}] 啟動掃描...")
+    print(f"[{time.strftime('%H:%M:%S')}] 啟動掃描...", flush=True)
 
     for pid, info in PLAYER_MAP.items():
         time.sleep(0.8) # 分散請求，降低被鎖機率
@@ -82,13 +88,13 @@ def check_players():
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers, timeout=(5, 10))
             
             if response.status_code != 200:
-                print(f"❌ 擷取 {name} 失敗，狀態碼: {response.status_code}")
+                print(f"❌ 擷取 {name} 失敗，狀態碼: {response.status_code}", flush=True)
                 if response.status_code in [429, 403, 1015]:
                     send_ip_blocked_warning(response.status_code)
-                    print("😴 進入冷卻模式，暫停打擾 Nexon 10 分鐘...")
+                    print("😴 進入冷卻模式，暫停打擾 Nexon 10 分鐘...", flush=True)
                     time.sleep(600)  # 暫停 10 分鐘
                     return           
                 continue
@@ -104,13 +110,13 @@ def check_players():
 
             if prev["is_online"] is None:
                 last_known_data[pid] = {"is_online": is_online, "world_name": world_name}
-                print(f"📌 [初始化紀錄] {name} -> 線上: {is_online}, 世界: {world_name}")
+                print(f"📌 [初始化紀錄] {name} -> 線上: {is_online}, 世界: {world_name}", flush=True)
                 continue
 
             should_notify = False
             status_msg = ""
             
-            print(f"    [比對-{name}] 歷史: {prev['is_online']}({prev['world_name']}) ➡️ 最新: {is_online}({world_name})")
+            print(f"    [比對-{name}] 歷史: {prev['is_online']}({prev['world_name']}) ➡️ 最新: {is_online}({world_name})", flush=True)
 
             if prev["is_online"] != is_online:
                 should_notify = True
@@ -150,10 +156,10 @@ def check_players():
                 }
                 
                 send_discord_webhook(DISCORD_WEBHOOK_URL, payload)
-                print(f"📣 [Discord已發送] 通知玩家: {name} {status_msg}")
+                print(f"📣 [Discord已發送] 通知玩家: {name} {status_msg}", flush=True)
 
         except Exception as e:
-            print(f"❌ 檢查 {pid} ({info.get('name', '未知')}) 出錯: {e}")
+            print(f"❌ 檢查 {pid} ({info.get('name', '未知')}) 出錯: {e}", flush=True)
 
 def main_loop():
     while True:
@@ -161,21 +167,21 @@ def main_loop():
         time.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
-    # 💡 建立背景任務執行緒：把初始化發送與循環監控放進背景，避免卡住主執行緒的 Port 綁定
     def background_startup_and_monitor():
-        print("--- 正在嘗試發送啟動訊號到 Discord ---")
+        print("--- 正在嘗試發送啟動訊號到 Discord ---", flush=True)
         startup_payload = {"content": "🤖 PAKA，自己掰開！"}
-        if send_discord_webhook(DISCORD_WEBHOOK_URL, startup_payload):
-            print(f"✅ Discord 啟動訊號發送成功！")
-        else:
-            print(f"⚠️ Discord 啟動訊號發送未成功（可能遭遇 429 限制已自動暫停）")
+        try:
+            send_discord_webhook(DISCORD_WEBHOOK_URL, startup_payload)
+        except Exception as e:
+            print(f"⚠️ 啟動訊號發送異常: {e}", flush=True)
 
+        # 無論啟動訊號是否成功，都強制啟動後台監控迴圈
         monitor_thread = threading.Thread(target=main_loop, daemon=True)
         monitor_thread.start()
-        print("📡 後台監控線程已啟動，開始循環掃描。")
+        print("📡 後台監控線程已啟動，開始循環掃描。", flush=True)
 
     bg_thread = threading.Thread(target=background_startup_and_monitor, daemon=True)
     bg_thread.start()
 
-    print("🌐 正在立即啟動 Flask Web 服務...")
-    run_web() # 主執行緒立刻跑 Flask，讓 Render 瞬間抓到 Port 通過檢測！
+    print("🌐 正在立即啟動 Flask Web 服務...", flush=True)
+    run_web()
