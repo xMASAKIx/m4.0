@@ -31,22 +31,22 @@ DEFAULT_IMAGE = "https://example.com/default.png"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
 # 建議調到 30 或 60 比較安全，但這邊先保留你原本的 15 試試看
-CHECK_INTERVAL = 8
+CHECK_INTERVAL = 10
 API_URL_TEMPLATE = "https://mverse-api.nexon.com/social/v1/profile/{}"
 
 last_known_data = {pid: {"is_online": None, "world_name": None} for pid in PLAYER_MAP.keys()}
 
 def send_discord_webhook(url, payload):
     """安全發送 Discord Webhook，自動處理 429 Rate Limit"""
-    for attempt in range(3): # 最多重試 3 次
+    for attempt in range(10): # 最多重試 3 次
         try:
             response = requests.post(url, json=payload, timeout=10)
             if response.status_code == 429:
                 # 取得 Discord 要求等待的時間 (秒)，如果沒有則預設 2 秒
                 try:
-                    retry_after = response.json().get('retry_after', 30)
+                    retry_after = response.json().get('retry_after', 300)
                 except:
-                    retry_after = 30
+                    retry_after = 300
                 print(f"⚠️ 觸發 Discord 429 Rate Limit，將等待 {retry_after} 秒後重試...")
                 time.sleep(retry_after)
                 continue
